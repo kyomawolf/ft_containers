@@ -150,7 +150,40 @@ namespace ft {
 
         size_type capacity() const { return _eos - _start; }
 
-        
+        reference at( size_type pos ) { if (pos < size()) return _start[pos]; throw std::out_of_range("vector"); }
+
+        const_reference at( size_type pos ) const { if (pos < size()) return _start[pos]; throw std::out_of_range("vector"); }
+
+        size_type   max_size() const { return static_cast<size_type>(_alloc.max_size() < std::numeric_limits<difference_type>::max() ? _alloc.max_size() : std::numeric_limits<difference_type>::max()); }
+
+        ///assign
+
+        void    assign(size_type n, value_type& val) {
+            if (_start != null_ptr && !empty())
+                clear();
+            resize(n, val); //TODO
+        }
+
+        template <typename InputIterator>
+        void    assign(InputIterator first, InputIterator last,
+                       typename ft::enable_if<!ft::is_integral<InputIterator>::value, InputIterator>::type* = 0) {
+            if (_start != null_ptr && !empty())
+                clear();
+            for (; first != last; first++)
+                push_back(*first); //TODO
+        }
+
+        ///data
+
+        value_type* data() { return _start; }
+
+        const value_type* data() const { return _start; }
+
+        ///sizestuff
+        // reserve, resize,
+
+
+        ///
     };
 };
 
