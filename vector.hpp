@@ -5,8 +5,9 @@
 #define  null_ptr NULL
 #endif /*null_ptr*/
 #include <memory>
-#include "iterator.hpp"
 #include <iostream>
+#include "iterator.hpp"
+#include "compare.hpp"
 
 namespace ft {
     template <class T, class Allocator = std::allocator<T> >
@@ -161,7 +162,7 @@ namespace ft {
         void    assign(size_type n, value_type& val) {
             if (_start != null_ptr && !empty())
                 clear();
-            resize(n, val); //TODO
+            resize(n, val);
         }
 
         template <typename InputIterator>
@@ -170,7 +171,7 @@ namespace ft {
             if (_start != null_ptr && !empty())
                 clear();
             for (; first != last; first++)
-                push_back(*first); //TODO
+                push_back(*first);
         }
 
         ///data
@@ -179,12 +180,108 @@ namespace ft {
 
         const value_type* data() const { return _start; }
 
+        ///manipulation
+
+        void    push_back(value_type& val) {
+            reserve(size() + 1);
+            _build(1, val);
+        }
+
+        void    pop_back() {
+            if (empty())
+                return;
+            _destroy(_finish - 1);
+            --_finish;
+        }
+
+        iterator erase(iterator pos) {
+            if (pos + 1 == end()) {
+                pop_back();
+            } else {
+                iterator cp = pos;
+                for (iterator first = pos + 1; first != end(); first++) {
+                    *cp = *first;
+                    ++cp;
+                }
+            }
+            return pos;
+        }
+
+        iterator erase(iterator first, iterator last) {
+            if (last + 1 == end()) {
+                _destroy(pointer(*first), last - first);
+                _finish -= last - first;
+            } else {
+                for (iterator cp = first, cp_l = last + 1; cp_l != end(); cp++, cp_l++) {
+                    *cp = *cp_l;
+                }
+                _destroy(pointer(*(first + (end() - last))), end() - last);
+                _finish -= end() - last;
+            }
+            return first;
+        }
+
+
+
+        //TODO insert
+        //TODO swap
         ///sizestuff
-        // reserve, resize,
 
+        void    resize(size_type n, value_type val = value_type()) {
+            reserve(n);
+            _build(n - size(), val);
+        }
 
-        ///
+        void reserve(size_type n) {
+            if (n <= capacity())
+                return;
+            if (n > max_size())
+                throw std::length_error("vector");
+            pointer old_start = _start;
+            pointer old_finish = _finish;
+            pointer old_eos = _eos;
+            _allocate_n(n);
+            _build(pointer(old_start), old_finish);
+            _destroy(old_start, old_finish - old_start);
+            _alloc.deallocate(old_start, old_eos - old_start);
+        }
+
+        /// comparison
+
     };
+    template <typename T, typename Allocator>
+    inline bool    operator==(const vector<T, Allocator>& first, const vector<T, Allocator>& sec) {
+        if (first.size() == sec.size() && ft::equal(first.begin(), first.end(), sec.begin()))
+            return true;
+        return false;
+    }
+    template <typename T, typename Allocator>
+    inline bool    operator!=(const vector<T, Allocator>& first, const vector<T, Allocator>& sec) {
+        if (!(first == sec))
+            return true;
+        return false;
+    }
+    template <typename T, typename Allocator>
+    inline bool    operator<(const vector<T, Allocator>& first, const vector<T, Allocator>& sec) {
+        return ft::lexicographical_compare(first.begin(), first.end(), sec.begin(), sec.end());
+    }
+    template <typename T, typename Allocator>
+    inline bool    operator>(const vector<T, Allocator>& first, const vector<T, Allocator>& sec) {
+        return sec < first;
+    }
+    template <typename T, typename Allocator>
+    inline bool    operator<=(const vector<T, Allocator>& first, const vector<T, Allocator>& sec) {
+        return !(sec < first);
+    }
+    template <typename T, typename Allocator>
+    inline bool    operator>=(const vector<T, Allocator>& first, const vector<T, Allocator>& sec) {
+        return !(first < sec);
+    }
+
+    template <typename T, typename Allocator>
+    inline void swap(vector<T, Allocator>& first, vector<T, Allocator>& sec) {
+        first.swap(sec);
+    }
 };
 
 #endif /*VECTOR_HPP*/
