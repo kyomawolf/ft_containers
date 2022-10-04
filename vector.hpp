@@ -30,6 +30,7 @@ namespace ft {
         pointer         _start;
         pointer         _finish;
         pointer         _eos;
+        bool            _has_allocated;
 
         ///ALLOCATOR
 
@@ -39,9 +40,12 @@ namespace ft {
 //            if (n > max_size())
 //                throw std::length_error("vector");
             _start = _alloc.allocate(n);
+            _has_allocated = true;
             _finish = _start;
             _eos = _start + n;
         }
+
+        inline void    _construct(pointer target, const_reference val) {_alloc.construct(target, val); }
 
         inline void    _build(size_type n, value_type val) {
             //debug
@@ -50,17 +54,19 @@ namespace ft {
                 return;
             } //debug
             for (size_type i = 0; i < n; i++) {
-                _alloc.construct(_finish, val);
+                _construct(_finish, val);
                 ++_finish;
             }
         }
         template <typename ForwardIter>
-        inline void    _build(ForwardIter first, ForwardIter last) {
+        inline void    _build(ForwardIter first, ForwardIter last, size_type dummy) {
+            (void) dummy;
             for (; first != last; first++) {
-                _alloc.construct(_finish, *first);
+                _construct(_finish, *first);
                 ++_finish;
             }
         }
+
 
         inline void    _destroy(pointer dest, size_type n) {
             for (size_type i = 0; i < n; i++)
@@ -70,13 +76,17 @@ namespace ft {
         inline void    _delete() {
             if (_start == null_ptr)
                 return;
-            clear();
-            _alloc.deallocate(_start, capacity());
+            if (_has_allocated) {
+                if (size() != 0)
+                    _destroy(_start, size());
+                _alloc.deallocate(_start, capacity());
+                _has_allocated = false;
+            }
         }
 
     public:
         explicit vector(const allocator_type& alloc = allocator_type()) : _alloc(alloc),
-        _start(null_ptr), _finish(null_ptr), _eos(null_ptr) { }
+        _start(null_ptr), _finish(null_ptr), _eos(null_ptr), _has_allocated(false) { }
 
         explicit vector(size_type n, const value_type& val = value_type(), const allocator_type& alloc = allocator_type() ) :
         _alloc(alloc), _start(null_ptr), _finish(null_ptr), _eos(null_ptr) {
@@ -86,21 +96,19 @@ namespace ft {
         template <typename InputIterator>
         vector(InputIterator first, InputIterator last, const allocator_type& alloc = allocator_type(),
                typename ft::enable_if<!ft::is_integral<InputIterator>::value, InputIterator>::type* = 0)
-                : _alloc(alloc), _start(null_ptr), _finish(null_ptr), _eos(null_ptr) {
+                : _alloc(alloc), _start(null_ptr), _finish(null_ptr), _eos(null_ptr), _has_allocated(false) {
             assign(first, last);
         }
 
         vector(const vector& x)
-                : _alloc(x.get_allocator()), _start(null_ptr), _finish(nullptr), _eos(null_ptr)
+                : _alloc(x.get_allocator()), _start(null_ptr), _finish(nullptr), _eos(null_ptr), _has_allocated(false)
         {
             size_type n = x.size();
             if (n > 0) {
                 _allocate_n(n);
-                _build(x.begin(), x.end(), ft::iterator_category(x.begin()));
+                _build(x.begin(), x.end(), 0);
             }
         }
-
-        ~vector() { _delete(); }
 
         vector& operator=(const vector& other)
         {
@@ -111,9 +119,11 @@ namespace ft {
             return *this;
         }
 
+        ~vector() { _delete(); }
+
         ///easy stuff
 
-        void clear() { _destroy(_start, size()); }
+        void clear() { _destroy(_start, size()); _finish = _start; }
 
         allocator_type  get_allocator() const { return _alloc; }
 
@@ -155,12 +165,15 @@ namespace ft {
 
         const_reference at( size_type pos ) const { if (pos < size()) return _start[pos]; throw std::out_of_range("vector"); }
 
-        size_type   max_size() const { return static_cast<size_type>(_alloc.max_size() < std::numeric_limits<difference_type>::max() ? _alloc.max_size() : std::numeric_limits<difference_type>::max()); }
-
+        size_type max_size() const {
+            if (static_cast<long long>(_alloc.max_size()) < static_cast<long long>(std::numeric_limits<difference_type>::max()))
+                return _alloc.max_size();
+            return std::numeric_limits<difference_type>::max();
+        }
         ///assign
 
-        void    assign(size_type n, value_type& val) {
-            if (_start != null_ptr && !empty())
+        void    assign(size_type n, const value_type& val) {
+            if (size())
                 clear();
             resize(n, val);
         }
@@ -182,7 +195,7 @@ namespace ft {
 
         ///manipulation
 
-        void    push_back(value_type& val) {
+        void    push_back(const value_type& val) {
             reserve(size() + 1);
             _build(1, val);
         }
@@ -190,7 +203,7 @@ namespace ft {
         void    pop_back() {
             if (empty())
                 return;
-            _destroy(_finish - 1);
+            _destroy(_finish - 1, 1);
             --_finish;
         }
 
@@ -203,33 +216,77 @@ namespace ft {
                     *cp = *first;
                     ++cp;
                 }
+                _destroy(_finish - 1, 1);
+                --_finish;
             }
             return pos;
         }
 
         iterator erase(iterator first, iterator last) {
-            if (last + 1 == end()) {
-                _destroy(pointer(*first), last - first);
+            if (last == first)
+                return last;
+            if (last == end()) {
+                _destroy(&(*first), last - first);
                 _finish -= last - first;
             } else {
-                for (iterator cp = first, cp_l = last + 1; cp_l != end(); cp++, cp_l++) {
+                iterator cp = first, cp_l = last;
+                for (; cp_l != end(); cp++, cp_l++) {
                     *cp = *cp_l;
                 }
-                _destroy(pointer(*(first + (end() - last))), end() - last);
-                _finish -= end() - last;
+                --cp_l;
+                for (difference_type i = 0; i < (last - first); i++, --cp_l) {
+                    _destroy(&*cp_l, 1);
+                    --_finish;
+                }
             }
             return first;
         }
 
+        void    _move_end_n(size_type pos, size_type n) {
+            reserve(size() + n);
+            pointer last = _finish - 1;
+            size_type diff = size() - pos;
+            _build(n, value_type());
+            for (size_type i = 0; i < diff; i++)
+                *(_finish - 1 - i) = *(last - i);
+        }
 
+        iterator insert( const_iterator pos, const T& value ) {
+            size_type x = pos - begin();
+            _move_end_n(x, 1);
+            *(_start + x) = value;
+            return iterator(_start + x);
+        }
 
-        //TODO insert
-        //TODO swap
+        iterator insert( const_iterator pos, size_type count, const T& value ) {
+            size_type x = pos - begin();
+            _move_end_n(x, count);
+            pointer p = _start + x;
+            for (size_type i = 0; i < count; ++i, ++p)
+                *p = value;
+            return iterator(_start + x);
+        }
+
+        template< class InputIterator >
+        iterator insert( const_iterator pos, InputIterator first, InputIterator last, typename ft::enable_if<!ft::is_integral<InputIterator>::value, InputIterator>::type* = 0) {
+            size_type x = pos - begin();
+            pointer tmp = const_cast<pointer>(&*pos);
+            iterator ins = tmp;
+            for (; first != last; ++first, ++ins)
+                ins = insert(ins, *first);
+            return iterator(_start + x);
+        }
+
         ///sizestuff
 
         void    resize(size_type n, value_type val = value_type()) {
-            reserve(n);
-            _build(n - size(), val);
+            if (n < size()) {
+                for (size_type i = size(); i > n; --i)
+                    pop_back();
+            } else {
+                reserve(n);
+                _build(n - size(), val);
+            }
         }
 
         void reserve(size_type n) {
@@ -241,14 +298,23 @@ namespace ft {
             pointer old_finish = _finish;
             pointer old_eos = _eos;
             _allocate_n(n);
-            _build(pointer(old_start), old_finish);
-            _destroy(old_start, old_finish - old_start);
-            _alloc.deallocate(old_start, old_eos - old_start);
+            if (old_finish - old_start > 0)
+                _build(pointer(old_start), old_finish, 0);
+            if (old_eos - old_start != 0) {
+                _destroy(old_start, old_finish - old_start);
+                _alloc.deallocate(old_start, old_eos - old_start);
+            }
         }
 
-        /// comparison
+        void    swap(vector& other) {
+            ft::swap(_alloc, other._alloc);
+            ft::swap(_start, other._start);
+            ft::swap(_finish, other._finish);
+            ft::swap(_eos, other._eos);
+        }
 
     };
+    /// comparison
     template <typename T, typename Allocator>
     inline bool    operator==(const vector<T, Allocator>& first, const vector<T, Allocator>& sec) {
         if (first.size() == sec.size() && ft::equal(first.begin(), first.end(), sec.begin()))
