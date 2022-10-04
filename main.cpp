@@ -339,6 +339,7 @@
 //}
 
 #include "vector.hpp"
+#include "tree.hpp"
 int main() {
 
 //	ft::vector<int> tst(12, 1);
