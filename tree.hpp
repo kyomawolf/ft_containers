@@ -1,6 +1,9 @@
 #pragma once
 
-#ifndef null_ptr
+#include <memory>
+#ifndef NULL && null_ptr
+#define null_ptr nullptr
+#elifndef null_ptr
 #define  null_ptr NULL
 #endif /*null_ptr*/
 
@@ -27,7 +30,7 @@ namespace ft {
     template <class node_ptr>
     node_ptr prev_tree_node(node_ptr node)
     {
-        if (node->left != nullptr)
+        if (node->left != null_ptr)
             return highest_tree_node(node->left);
 
         while (node == node->parent->left)
@@ -38,7 +41,7 @@ namespace ft {
     template <class node_ptr>
     node_ptr next_tree_node(node_ptr node)
     {
-        if (node->right != nullptr)
+        if (node->right != null_ptr)
             return lowest_tree_node(node->right);
 
         while (node == node->parent->right)
@@ -59,6 +62,7 @@ namespace ft {
         pointer parent;
         pointer left;
         pointer right;
+        E_Color color;
     };
 
     template<typename T, typename diff>
@@ -228,11 +232,297 @@ namespace ft {
     public:
         explicit tree(const value_compare& compare, const allocator_type& allocator) : _comp(compare), _alloc(allocator), _node_alloc(allocator), _count(0), _head(null_ptr), _left_outer(null_ptr) { };
         tree(const tree& other) :_comp(other._comp), _alloc(other._alloc), _node_alloc(other._node_alloc) {
-            //todo
+            _head = construct_node_(value_type(), BLACK);
+            _head->parent = _head;
+            _left_outer = _head;
+
+            *this = other;
         }
 
         ~tree() { destroy_(_head); }
 
-        tree& operator=(const tree& other)
+
+
+        tree& operator=(const tree& other) {
+            if (this != &other) {
+                clear(); //todo
+                _comp = other._comp;
+                if (other._root() != nullptr) {
+                    _root() = copy_(other._root()); //todo
+                    _root()->parent = _head;
+                    _left_outer = RBTree_min(_root());
+                    _count = other.node_count_;
+                }
+            }
+            return *this;
+        }
+
+
+        allocator_type get_allocator()  const { return _alloc; }
+        size_type      max_size()       const { return _node_alloc.max_size(); }
+
+        void clear() {
+            _destroy_rec(_root());
+            _root() = null_ptr;
+            _left_outer = _head;
+        }
+    private:
+
+        node_pointer _root() const { return _head->left; }
+        node_pointer& _root() { return _head->left; }
+
+        ///node creation and deletion
+        void    _delete_node(node_pointer node) {
+            _alloc.destroy(node->value);
+            _node_alloc.deallocate(node, 1);
+        }
+
+        void _destroy_rec(node_pointer node) {
+            if (!node)
+                return;
+            _destroy_rec(node->left);
+            _destroy_rec(node->right);
+            _delete_node(node);
+        }
+
+        node_pointer _copy_rec(const node_pointer node) {
+            if (node == null_ptr)
+                return null_ptr;
+            node_pointer ret_node = _new_node(node);
+            ret_node->left = _copy_rec(node->left);
+            ret_node->right = _copy_rec(node->right);
+            if (ret_node->left)
+                ret_node->left->parent = ret_node;
+            if (ret_node->right)
+                ret_node->right->parent = ret_node;
+            return ret_node;
+        }
+
+        node_pointer _new_node(const node_pointer& node) {
+            return _new_node(node->value, node->color);
+        }
+
+        node_pointer _new_node(const value_type& val, E_Color color) {
+            node_pointer node = _node_alloc.allocate(1);
+            _alloc.construct(&node->val, val);
+            node->color = color;
+            node->parent = null_ptr;
+            node->left = null_ptr;
+            node->right = null_ptr;
+            return node;
+        }
+
+        /// rotation
+
+        void _left_rotation(node_pointer init)
+        {
+            node_pointer tmp = init->right;
+            init->right = tmp->left;
+            if (init->right != null_ptr)
+                init->right->parent = init;
+            tmp->parent = init->parent;
+            if (init == init->parent->left)
+                init->parent->left = tmp;
+            else
+                init->parent->right = tmp;
+
+            tmp->left = init;
+            init->parent = tmp;
+        }
+
+        void _right_rotation(node_pointer init)
+        {
+            node_pointer tmp = init->left;
+            init->left = tmp->right;
+            if (init->left != null_ptr)
+                init->left->parent = init;
+            tmp->parent = init->parent;
+            if (init == init->parent->left)
+                init->parent->left = tmp;
+            else
+                init->parent->right = tmp;
+
+            tmp->right = init;
+            init->parent = tmp;
+        }
+
+        void insert_node(node_pointer& pos, node_pointer origin, node_pointer node) {
+            node->parent = origin;
+            pos = node;
+            ++_count;
+            if (_left_outer->left)
+                _left_outer = _left_outer->left;
+            _insert_balance(_root(), node);
+        }
+
+        void _insert_balance(node_pointer root, node_pointer key) {
+            if (key == root)
+            key->color = BLACK;
+            else
+                key->color = RED;
+            while (key != root && key->parent->color == RED) {
+                if (key->parent == key->parent->parent->left) {
+                    node_pointer uncle = key->parent->parent->right;
+                    if (uncle && uncle->color == RED) {
+                        uncle->color = BLACK;
+                        key->parent->color = BLACK;
+                        key = key->parent->parent;
+                        if (key == root)
+                            key->color = BLACK;
+                        else
+                            key->color = RED;
+                    } else {
+                        if (key == key->parent->right) {
+                        key = key->parent;
+                        _left_rotation(key);
+                        }
+                        key->parent->color = BLACK;
+                        key->parent->parent->color = RED;
+                        _right_rotation(key->parent->parent);
+                        break;
+                    }
+                } else {
+                    node_pointer uncle = key->parent->parent->left;
+                    if (uncle != null_ptr && uncle->color == RED) {
+                        uncle->color = BLACK;
+                        key = key->parent->color = BLACK;
+                        key = key->parent->parent;
+                        if (key == root)
+                            key->color = BLACK;
+                        else
+                            key->color = RED;
+                    } else {
+                        if (key == key->parent->left) {
+                            key = key->parent;
+                            _right_rotation(key);
+                        }
+                        key->parent->color = BLACK;
+                        key->parent->parent->color = RED;
+                        _left_rotation(key->parent->parent);
+                        break;
+                    }
+                }
+            }
+        }
+
+        void _remove_node(node_pointer root, node_pointer node) {
+            node_pointer replace;
+            node_pointer child_replace;
+            node_pointer sibling = null_ptr;
+            if (node->left == null_ptr || node->right == null_ptr)
+                replace = node;
+            else
+                replace = next_tree_node(node);
+            if (replace->left)
+                child_replace = replace->left;
+            else
+                child_replace = replace->right;
+            if (child_replace)
+                child_replace->parent = replace->parent;
+            if (replace == replace->parent->left) {
+                replace->parent->left = child_replace;
+                if (replace == root)
+                    root = child_replace;
+                else
+                    sibling = replace->parent->right;
+            } else {
+                replace->parent->right = child_replace;
+                sibling = replace->parent->left;
+            }
+
+            bool set_red = (replace->color == BLACK);
+            if (replace != node) {
+                if (node == root)
+                    root = replace;
+                replace->parent = node->parent;
+                if (node == node->parent->left)
+                    replace->parent->left = replace;
+                else
+                    replace->parent->right = replace;
+                replace->left = node->left;
+                replace->left->parent = node;
+                replace->right = node->right;
+                if (!replace->right)
+                    replace->right->parent = replace;
+                replace->color = node->color;
+            }
+            if ((set_red && !root) && (child_replace))
+                child_replace->color = BLACK;
+            else if (set_red && !root)
+                _remove_balance(root, sibling);
+        }
+
+        void _remove_balance(node_pointer root, node_pointer sibling) {
+            node_pointer tmp = null_ptr;
+            while (true) {
+                if (sibling == sibling->parent->right) {
+                    if (sibling->color == RED) {
+                        sibling->color = BLACK;
+                        sibling->parent->color = RED;
+                        _left_rotation(sibling->parent);
+                        if (root == sibling->left)
+                            root = sibling;
+                        sibling = sibling->left->right;
+                    }
+                    if ((sibling->left == null_ptr || sibling->left->color == BLACK) && (sibling->right == null_ptr || sibling->right->color == BLACK)) {
+                        sibling->color = RED;
+                        tmp = sibling->parent;
+                        if (tmp == root || tmp->color == RED) {
+                            tmp->color = BLACK;
+                            break;
+                        }
+                        if (tmp == tmp->parent->left)
+                            sibling = tmp->parent->right;
+                        else
+                            sibling = tmp->parent->left;
+                    } else {
+                        if (sibling->right == null_ptr || sibling->right->color == BLACK) {
+                            sibling->left->color = BLACK;
+                            sibling->color = RED;
+                            _right_rotation(sibling);
+                            sibling = sibling->parent;
+                        }
+                    }
+                    sibling->color = sibling->parent->color;
+                    sibling->parent->color = BLACK;
+                    sibling->right->color = BLACK;
+                    _left_rotation(sibling->parent);
+                    break;
+                } else {
+                    if (sibling->color == RED) {
+                        sibling->color = BLACK;
+                        sibling->parent->color = RED;
+                        _right_rotation(sibling->parent);
+                        if (root == sibling->right)
+                            root = sibling;
+                        sibling = sibling->right->left;
+                    }
+                    if ((sibling->left == null_ptr || sibling->left->color == BLACK) && (sibling->right == null_ptr || sibling->right->color == BLACK)) {
+                        sibling->color = RED;
+                        tmp = sibling->parent;
+                        if (tmp == root || tmp->color == RED) {
+                            tmp->color = BLACK;
+                            break;
+                        }
+                        if (tmp == tmp->parent->left)
+                            sibling = tmp->parent->right;
+                        else
+                            sibling = tmp->parent->left;
+                    } else {
+                        if (sibling->left == null_ptr || sibling->left->color == BLACK) {
+                            sibling->right->color = BLACK;
+                            sibling->color = RED;
+                            _left_rotation(sibling);
+                            sibling = sibling->parent;
+                        }
+                        sibling->color = sibling->parent->color;
+                        sibling->parent->color = BLACK;
+                        sibling->left->color = BLACK;
+                        _right_rotation(sibling->parent);
+                        break;
+                    }
+                }
+            }
+        }
     };
 };

@@ -85,10 +85,10 @@ namespace ft
     }
 
 /*
-** normal_iterator
+** random_iterator
 */
     template <typename Iter, typename Container>
-    class normal_iterator
+    class random_iterator
     {
     protected:
         Iter current_;
@@ -103,12 +103,12 @@ namespace ft
         typedef typename traits_type_::pointer           pointer;
         typedef typename traits_type_::reference         reference;
 
-        normal_iterator() : current_(iterator_type()) {}
+        random_iterator() : current_(iterator_type()) {}
 
-        normal_iterator(const iterator_type& other) : current_(other) {}
+        random_iterator(const iterator_type& other) : current_(other) {}
 
         template <typename U>
-        normal_iterator(const normal_iterator<
+        random_iterator(const random_iterator<
                 U, typename ft::enable_if<
                         ft::are_same<U, typename Container::pointer>::value,
                         Container>::type>& it)
@@ -116,57 +116,57 @@ namespace ft
         {
         }
 
-        ~normal_iterator() {}
+        ~random_iterator() {}
 
-        reference operator*() const { return *current_; }
+        reference operator*()                   const { return *current_; }
 
         reference operator[](difference_type n) const { return current_[n]; }
 
-        pointer operator->() const { return &(operator*()); }
+        pointer operator->()                    const { return &(operator*()); }
 
-        normal_iterator& operator++()
+        random_iterator& operator++()
         {
             ++current_;
             return *this;
         }
 
-        normal_iterator operator++(int)
+        random_iterator operator++(int)
         {
-            normal_iterator tmp(*this);
+            random_iterator tmp(*this);
             ++current_;
             return tmp;
         }
 
-        normal_iterator& operator--()
+        random_iterator& operator--()
         {
             --current_;
             return *this;
         }
 
-        normal_iterator operator--(int)
+        random_iterator operator--(int)
         {
-            normal_iterator tmp(*this);
+            random_iterator tmp(*this);
             --current_;
             return tmp;
         }
 
-        normal_iterator operator+(difference_type n) const
+        random_iterator operator+(difference_type n) const
         {
-            return normal_iterator(current_ + n);
+            return random_iterator(current_ + n);
         }
 
-        normal_iterator& operator+=(difference_type n)
+        random_iterator& operator+=(difference_type n)
         {
             current_ += n;
             return *this;
         }
 
-        normal_iterator operator-(difference_type n) const
+        random_iterator operator-(difference_type n) const
         {
-            return normal_iterator(current_ - n);
+            return random_iterator(current_ - n);
         }
 
-        normal_iterator& operator-=(difference_type n)
+        random_iterator& operator-=(difference_type n)
         {
             current_ -= n;
             return *this;
@@ -176,67 +176,67 @@ namespace ft
     };
 
     template <typename IterL, typename IterR, typename Container>
-    inline bool operator==(const normal_iterator<IterL, Container>& lhs,
-                           const normal_iterator<IterR, Container>& rhs)
+    inline bool operator==(const random_iterator<IterL, Container>& lhs,
+                           const random_iterator<IterR, Container>& rhs)
     {
         return lhs.base() == rhs.base();
     }
 
     template <typename IterL, typename IterR, typename Container>
-    inline bool operator!=(const normal_iterator<IterL, Container>& lhs,
-                           const normal_iterator<IterR, Container>& rhs)
+    inline bool operator!=(const random_iterator<IterL, Container>& lhs,
+                           const random_iterator<IterR, Container>& rhs)
     {
         return lhs.base() != rhs.base();
     }
 
     template <typename IterL, typename IterR, typename Container>
-    inline bool operator<(const normal_iterator<IterL, Container>& lhs,
-                          const normal_iterator<IterR, Container>& rhs)
+    inline bool operator<(const random_iterator<IterL, Container>& lhs,
+                          const random_iterator<IterR, Container>& rhs)
     {
         return lhs.base() < rhs.base();
     }
 
     template <typename IterL, typename IterR, typename Container>
-    inline bool operator<=(const normal_iterator<IterL, Container>& lhs,
-                           const normal_iterator<IterR, Container>& rhs)
+    inline bool operator<=(const random_iterator<IterL, Container>& lhs,
+                           const random_iterator<IterR, Container>& rhs)
     {
         return lhs.base() <= rhs.base();
     }
 
     template <typename IterL, typename IterR, typename Container>
-    inline bool operator>(const normal_iterator<IterL, Container>& lhs,
-                          const normal_iterator<IterR, Container>& rhs)
+    inline bool operator>(const random_iterator<IterL, Container>& lhs,
+                          const random_iterator<IterR, Container>& rhs)
     {
         return lhs.base() > rhs.base();
     }
 
     template <typename IterL, typename IterR, typename Container>
-    inline bool operator>=(const normal_iterator<IterL, Container>& lhs,
-                           const normal_iterator<IterR, Container>& rhs)
+    inline bool operator>=(const random_iterator<IterL, Container>& lhs,
+                           const random_iterator<IterR, Container>& rhs)
     {
         return lhs.base() >= rhs.base();
     }
 
     template <typename IterL, typename IterR, typename Container>
-    inline typename normal_iterator<IterL, Container>::difference_type operator-(
-            const normal_iterator<IterL, Container>& lhs,
-            const normal_iterator<IterR, Container>& rhs)
+    inline typename random_iterator<IterL, Container>::difference_type operator-(
+            const random_iterator<IterL, Container>& lhs,
+            const random_iterator<IterR, Container>& rhs)
     {
         return lhs.base() - rhs.base();
     }
 
     template <typename Iter, typename Container>
-    inline typename normal_iterator<Iter, Container>::difference_type operator-(
-            const normal_iterator<Iter, Container>& lhs,
-            const normal_iterator<Iter, Container>& rhs)
+    inline typename random_iterator<Iter, Container>::difference_type operator-(
+            const random_iterator<Iter, Container>& lhs,
+            const random_iterator<Iter, Container>& rhs)
     {
         return lhs.base() - rhs.base();
     }
 
     template <typename Iter, typename Container>
-    inline normal_iterator<Iter, Container> operator+(
-            typename normal_iterator<Iter, Container>::difference_type n,
-            normal_iterator<Iter, Container>                           it)
+    inline random_iterator<Iter, Container> operator+(
+            typename random_iterator<Iter, Container>::difference_type n,
+            random_iterator<Iter, Container>                           it)
     {
         it += n;
         return it;
