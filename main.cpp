@@ -338,8 +338,10 @@
 //	test.insert(somepair);
 //}
 
-#include "vector.hpp"
-#include "tree.hpp"
+//#include "vector.hpp"
+//#include "tree.hpp"
+#include "map.hpp"
+#include <iostream>
 int main() {
 
 //	ft::vector<int> tst(12, 1);
@@ -370,9 +372,7 @@ int main() {
 //	vector_test_original();
 //	std::cout << "FT_CONTAINERS FUNCTIONS TEST OUTPUT: \n";
 //	vector_test();
-    ft::vector<std::string> v;
-    auto it = v.insert(v.end(), "a");
-    std::cout << *it << std::endl;
-
+    ft::map m_class;
+    std::cout << "smthing" << std::endl;
 	return 0;
 }

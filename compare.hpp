@@ -29,8 +29,8 @@ namespace ft {
 				return false;
 			else if (*first1 < *first2)
 				return true;
-			first1++;
-			first2++;
+			++first1;
+			++first2;
 		}
 		return (first2 != last2);
 	}
@@ -43,8 +43,8 @@ namespace ft {
 				return false;
 			else if (comp(*first1, *first2))
 				return true;
-			first1++;
-			first2++;
+			++first1;
+			++first2;
 		}
 		return (first2 != last2);
 	}
@@ -59,14 +59,6 @@ namespace ft {
     const T& min(const T& a, const T& b)
     {
         return a < b ? a : b;
-    }
-
-    template <typename T>
-    void swap(T& a, T& b)
-    {
-        T tmp = a;
-        a = b;
-        b = tmp;
     }
 }
 

@@ -20,6 +20,9 @@ $(NAME) : $(OBJ) $(HDR)
 $(OBJ_DIR)%.o : $(SRC_DIR)%.cpp $(HDR)
 	c++ $(FLAGS) -c $< -o $@
 
+$(OBJ_DIR):
+	mkdir obj
+
 re : fclean all
 
 clean :
