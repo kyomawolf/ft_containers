@@ -95,10 +95,6 @@ namespace ft {
 
     template <typename T>
     struct is_integral : is_integral_base<typename remove_cv<T>::type> {};
-
-/*
-**  Compare for equality of types.
-*/
     template <typename, typename>
     struct are_same : public false_type {};
 
@@ -108,50 +104,3 @@ namespace ft {
 }  // namespace ft
 
 #endif  // FT_TYPE_TRAITS_HPP
-
-//#pragma once
-//
-//namespace ft {
-//    typedef std::output_iterator_tag        output_iterator_tag;
-//    typedef std::input_iterator_tag         input_iterator_tag;
-//    typedef std::forward_iterator_tag       forward_iterator_tag;
-//    typedef std::bidirectional_iterator_tag bidirectional_iterator_tag;
-//    typedef std::random_access_iterator_tag random_access_iterator_tag;
-//
-//    template <typename Category, typename T, typename Distance = ptrdiff_t,
-//            typename Pointer = T*, typename Reference = T&>
-//    struct iterator {
-//        typedef T         value_type;
-//        typedef Distance  difference_type;
-//        typedef Pointer   pointer;
-//        typedef Reference reference;
-//        typedef Category  iterator_category;
-//    };
-//
-//    template <typename Iter>
-//    struct iterator_traits {
-//        typedef typename Iter::value_type        value_type;
-//        typedef typename Iter::difference_type   difference_type;
-//        typedef typename Iter::pointer           pointer;
-//        typedef typename Iter::reference         reference;
-//        typedef typename Iter::iterator_category iterator_category;
-//    };
-//
-//    template <typename T>
-//    struct iterator_traits<T*> {
-//        typedef T                          value_type;
-//        typedef std::ptrdiff_t             difference_type;
-//        typedef T*                         pointer;
-//        typedef T&                         reference;
-//        typedef random_access_iterator_tag iterator_category;
-//    };
-//
-//    template <typename T>
-//    struct iterator_traits<const T*> {
-//        typedef T                          value_type;
-//        typedef std::ptrdiff_t             difference_type;
-//        typedef const T*                   pointer;
-//        typedef const T&                   reference;
-//        typedef random_access_iterator_tag iterator_category;
-//    };
-//}

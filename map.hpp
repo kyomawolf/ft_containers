@@ -35,12 +35,6 @@ namespace ft {
         Compare _comp;
     };
 
-//    template <typename Key, typename T, typename Compare>
-//    void swap(map_value_type_compare<Key, T, Compare>& x, map_value_type_compare<Key, T, Compare>& y)
-//    {
-//        x.swap(y);
-//    }
-
     template <typename Key, typename T, typename Compare = std::less<Key>, typename Alloc = std::allocator<ft::pair<const Key, T> > >
     class map {
     public:
