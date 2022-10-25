@@ -3,13 +3,9 @@
 
 #include <memory>
 #include <iostream>
-#ifndef NULL && null_ptr
-#define null_ptr nullptr
-#elifndef null_ptr
-#define  null_ptr NULL
-#endif /*null_ptr*/
 #include "iterator.hpp"
 #include "compare.hpp"
+#include "swap.hpp"
 
 namespace ft {
     template <class T, class Allocator = std::allocator<T> >
@@ -76,7 +72,7 @@ namespace ft {
         }
 
         inline void    _delete() {
-            if (_start == null_ptr)
+            if (_start == nullptr)
                 return;
             if (_has_allocated) {
                 if (size() != 0)
@@ -88,22 +84,22 @@ namespace ft {
 
     public:
         explicit vector(const allocator_type& alloc = allocator_type()) : _alloc(alloc),
-        _start(null_ptr), _finish(null_ptr), _eos(null_ptr), _has_allocated(false) { }
+        _start(nullptr), _finish(nullptr), _eos(nullptr), _has_allocated(false) { }
 
         explicit vector(size_type n, const value_type& val = value_type(), const allocator_type& alloc = allocator_type() ) :
-        _alloc(alloc), _start(null_ptr), _finish(null_ptr), _eos(null_ptr) {
+        _alloc(alloc), _start(nullptr), _finish(nullptr), _eos(nullptr) {
             _allocate_n(n);
             _build(n, val);
         }
         template <typename InputIterator>
         vector(InputIterator first, InputIterator last, const allocator_type& alloc = allocator_type(),
                typename ft::enable_if<!ft::is_integral<InputIterator>::value, InputIterator>::type* = 0)
-                : _alloc(alloc), _start(null_ptr), _finish(null_ptr), _eos(null_ptr), _has_allocated(false) {
+                : _alloc(alloc), _start(nullptr), _finish(nullptr), _eos(nullptr), _has_allocated(false) {
             assign(first, last);
         }
 
         vector(const vector& x)
-                : _alloc(x.get_allocator()), _start(null_ptr), _finish(nullptr), _eos(null_ptr), _has_allocated(false)
+                : _alloc(x.get_allocator()), _start(nullptr), _finish(nullptr), _eos(nullptr), _has_allocated(false)
         {
             size_type n = x.size();
             if (n > 0) {
@@ -157,7 +153,7 @@ namespace ft {
 
         const_reverse_iterator  rend() const { return const_reverse_iterator(begin()); }
 
-        bool            empty() { return !size(); }
+        bool            empty() const { return !size(); }
 
         size_type size() const { return _finish - _start; }
 
@@ -168,9 +164,7 @@ namespace ft {
         const_reference at( size_type pos ) const { if (pos < size()) return _start[pos]; throw std::out_of_range("vector"); }
 
         size_type max_size() const {
-            if (static_cast<long long>(_alloc.max_size()) < static_cast<long long>(std::numeric_limits<difference_type>::max()))
-                return _alloc.max_size();
-            return std::numeric_limits<difference_type>::max();
+            return ft::min<size_type>((_alloc.max_size()), (std::numeric_limits<difference_type>::max()));
         }
         ///assign
 
@@ -183,7 +177,7 @@ namespace ft {
         template <typename InputIterator>
         void    assign(InputIterator first, InputIterator last,
                        typename ft::enable_if<!ft::is_integral<InputIterator>::value, InputIterator>::type* = 0) {
-            if (_start != null_ptr && !empty())
+            if (_start != nullptr && !empty())
                 clear();
             for (; first != last; first++)
                 push_back(*first);
